@@ -3,6 +3,11 @@ package com.abhi.spring.security.service;/*
 */
 
 import com.abhi.spring.security.entity.User;
+import com.abhi.spring.security.repositary.UserRepositary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,37 +17,28 @@ import java.util.UUID;
 @Service
 public class UserService {
 
-    List<User> list;
-    UserService(){
-        list = new ArrayList<>();
-        list.add(new User("1", "Abhishek Jadon", "jadonabhi@gmil.com"));
-        list.add(new User("2", "Aman Jadon", "aman@gmil.com"));
-        list.add(new User("3", "Shikha Jadon", "shikha@gmil.com"));
-        list.add(new User("4", "Abc Jadon", "abc@gmil.com"));
-        list.add(new User("5", "Xyz Jadon", "jadoxyznabhi@gmil.com"));
-    }
+    @Autowired
+    private UserRepositary userRepositary;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public User getUser(String userId){
-        User userReturn = null;
-        for (User user : list){
-            if (user.getUserId().equals(userId)){
-                return user;
-            }
-        }
-        return new User("dummyId", "Dummy", "dummay@gmial.com");
+
+        return this.userRepositary.findById(userId).orElseThrow(()->new UsernameNotFoundException("User not found"));
+
     }
 
 
     public User createUser(User user){
-        boolean add = list.add(user);
-        if (add) return user;
-        return null;
-
+        user.setUserId(UUID.randomUUID().toString());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User save = this.userRepositary.save(user);
+        return save;
     }
 
 
-
-    public List<User> getAllUser(){
-        return list;
+    public List<User> getAllUser() {
+        return this.userRepositary.findAll();
     }
 }
